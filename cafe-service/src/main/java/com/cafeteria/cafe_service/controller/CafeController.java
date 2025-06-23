@@ -37,4 +37,16 @@ public class CafeController {
         cafeService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Cafe> actualizarCafe(@PathVariable Long id, @RequestBody Cafe cafeActualizado) {
+        return cafeService.obtenerPorId(id).map(cafeExistente -> {
+            cafeExistente.setNombre(cafeActualizado.getNombre());
+            cafeExistente.setTipo(cafeActualizado.getTipo());
+            cafeExistente.setTamaño(cafeActualizado.getTamaño());
+            cafeExistente.setPrecio(cafeActualizado.getPrecio());
+            Cafe actualizado = cafeService.guardar(cafeExistente);
+            return ResponseEntity.ok(actualizado);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
 }
