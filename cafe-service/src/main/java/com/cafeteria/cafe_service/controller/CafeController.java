@@ -3,6 +3,8 @@ package com.cafeteria.cafe_service.controller;
 import com.cafeteria.cafe_service.model.Cafe;
 import com.cafeteria.cafe_service.service.CafeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,9 +23,16 @@ public class CafeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Cafe> obtenerCafe(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<Cafe>> obtenerCafe(@PathVariable Long id) {
         return cafeService.obtenerPorId(id)
-                .map(ResponseEntity::ok)
+                .map(cafe -> {
+                    EntityModel<Cafe> recurso = EntityModel.of(cafe);
+                    recurso.add(WebMvcLinkBuilder.linkTo(
+                            WebMvcLinkBuilder.methodOn(CafeController.class).obtenerCafe(id)).withSelfRel());
+                    recurso.add(WebMvcLinkBuilder.linkTo(
+                            WebMvcLinkBuilder.methodOn(CafeController.class).listarCafes()).withRel("todos-los-cafes"));
+                    return ResponseEntity.ok(recurso);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -32,11 +41,6 @@ public class CafeController {
         return cafeService.guardar(cafe);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarCafe(@PathVariable Long id) {
-        cafeService.eliminar(id);
-        return ResponseEntity.noContent().build();
-    }
     @PutMapping("/{id}")
     public ResponseEntity<Cafe> actualizarCafe(@PathVariable Long id, @RequestBody Cafe cafeActualizado) {
         return cafeService.obtenerPorId(id).map(cafeExistente -> {
@@ -49,4 +53,10 @@ public class CafeController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarCafe(@PathVariable Long id) {
+        cafeService.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
 }
+
